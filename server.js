@@ -375,6 +375,10 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
-  console.log(`Exercise AI Trainer running at http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Exercise AI Trainer running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
