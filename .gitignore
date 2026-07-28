@@ -1,0 +1,10 @@
+node_modules/
+db/app.sqlite
+db/app.sqlite-*
+models/*.pkl
+models/*.json
+models/*.task
+python/__pycache__/
+__pycache__/
+*.pyc
+.DS_Store

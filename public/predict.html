@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live detection — Exercise AI Trainer</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark"></span> Exercise AI Trainer</div>
+    <div class="nav-links">
+      <a href="index.html">Exercises</a>
+      <a href="train.html">Train models</a>
+    </div>
+    <div class="user-chip">
+      <span id="usernameLabel">...</span>
+      <button id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="section-title">
+      <h2 id="exerciseTitle">Loading…</h2>
+      <span class="hint"><a href="index.html">&larr; back to exercises</a></span>
+    </div>
+
+    <div class="live-layout">
+      <div class="camera-frame" id="cameraFrame">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="camera-overlay-top">
+          <span class="pill" id="statusPill">Camera off</span>
+          <span class="pill timer" id="timerPill" style="display:none;"></span>
+        </div>
+        <div class="tip-banner" id="tipBanner" style="display:none;"></div>
+      </div>
+      <div id="feedback-text">Waiting...</div>
+
+      <div class="hud-panel">
+        <div>
+          <h2>Form accuracy</h2>
+          <p class="hud-sub">Confidence this rep/pose matches correct form</p>
+        </div>
+
+        <div class="ring-wrap">
+          <svg width="150" height="150" viewBox="0 0 150 150">
+            <circle class="ring-bg" cx="75" cy="75" r="62"></circle>
+            <circle class="ring-fg" id="ringFg" cx="75" cy="75" r="62" stroke-dasharray="389.6"
+              stroke-dashoffset="389.6"></circle>
+          </svg>
+          <div class="ring-center">
+            <span class="value" id="ringValue">--</span>
+            <span class="label">accuracy</span>
+          </div>
+        </div>
+
+        <div class="metric-row" id="metricRow">
+          <div class="metric" id="metricPrimary">
+            <div class="value" id="metricPrimaryValue">0</div>
+            <div class="label" id="metricPrimaryLabel">Reps</div>
+          </div>
+          <div class="metric">
+            <div class="value" id="elapsedValue">0s</div>
+            <div class="label">Elapsed</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="hud-sub" style="margin-bottom:8px;">Optional timer</div>
+          <div class="timer-select" id="timerSelect">
+            <div class="timer-chip active" data-secs="0">No timer</div>
+            <div class="timer-chip" data-secs="30">30s</div>
+            <div class="timer-chip" data-secs="60">60s</div>
+            <div class="timer-chip" data-secs="120">2m</div>
+            <div class="timer-chip" data-secs="300">5m</div>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <button class="btn btn-primary" id="startBtn">Start session</button>
+          <button class="btn btn-danger" id="stopBtn" style="display:none;">Stop</button>
+        </div>
+
+        <div class="feature-list" id="featureList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary-modal" id="summaryModal">
+    <div class="summary-card">
+      <h2>Session complete</h2>
+      <p class="hint" id="summaryExercise"></p>
+      <div class="summary-grid" id="summaryGrid"></div>
+      <button class="btn btn-primary" id="closeSummaryBtn">Back to exercises</button>
+    </div>
+  </div>
+
+  <script src="js/predict.js"></script>
+</body>
+
+</html>

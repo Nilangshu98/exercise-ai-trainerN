@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Exercise AI Trainer</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark"></span> Exercise AI Trainer</div>
+    <div class="nav-links">
+      <a href="index.html" class="active">Exercises</a>
+      <a href="train.html">Train models</a>
+    </div>
+    <div class="user-chip">
+      <span id="usernameLabel">...</span>
+      <button id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="section-title">
+      <h2>Choose an exercise</h2>
+      <span class="hint">Select one to start live form detection</span>
+    </div>
+    <div class="exercise-grid" id="exerciseGrid">
+      <div class="empty-note">Loading exercises…</div>
+    </div>
+
+    <div class="section-title">
+      <h2>Recent sessions</h2>
+      <span class="hint">Last 50</span>
+    </div>
+    <div id="historyWrap">
+      <div class="empty-note">Loading history…</div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

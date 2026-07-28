@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Admin - Exercise AI Trainer</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 24px;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 16px;
+            border-radius: 6px;
+            max-width: 800px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input[type=text] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+        }
+
+        pre {
+            background: #f7f7f7;
+            padding: 12px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Admin Dashboard</h1>
+    <div class="card">
+        <h2>Login</h2>
+        <label for="username">Admin username</label>
+        <input id="username" type="text" placeholder="Admin username" />
+
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Password" />
+
+        <div style="margin-bottom:10px">
+            <button id="login">Login</button>
+            <button id="logout" style="margin-left:8px">Logout</button>
+        </div>
+
+        <hr />
+
+        <label for="secret">Or admin secret (from ADMIN_SECRET env)</label>
+        <input id="secret" type="text" placeholder="Enter admin secret" />
+        <div style="margin-bottom:10px">
+            <button id="load">Load stats</button>
+            <button id="refresh" style="margin-left:8px">Refresh</button>
+        </div>
+
+        <div id="status">Not authenticated.</div>
+        <h3>Raw response</h3>
+        <pre id="raw">{}</pre>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Train models — Exercise AI Trainer</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark"></span> Exercise AI Trainer</div>
+    <div class="nav-links">
+      <a href="index.html">Exercises</a>
+      <a href="train.html" class="active">Train models</a>
+    </div>
+    <div class="user-chip">
+      <span id="usernameLabel">...</span>
+      <button id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="section-title">
+      <h2>Train exercise models</h2>
+      <span class="hint">Drop jpg/png/mp4/avi into dataset/&lt;exercise&gt;/correct/ and /incorrect/, then retrain</span>
+    </div>
+    <div id="trainList">
+      <div class="empty-note">Loading…</div>
+    </div>
+
+    <div class="section-title">
+      <h2>Add a new exercise</h2>
+    </div>
+    <div class="train-card">
+      <div class="info">
+        <h3>Extending the app</h3>
+        <div class="meta" style="font-family: var(--font-body); color: var(--text-muted); max-width: 640px;">
+          New exercises need one entry in <code>python/exercise_rules.py</code> describing which joint
+          angles define correct form (a squat needs knee + back angle, a plank needs back angle, etc.),
+          plus a <code>dataset/&lt;name&gt;/correct/</code> and <code>/incorrect/</code> folder with sample
+          jpg/png/mp4/avi files. Restart the server and it shows up here automatically. See the README for
+          a copy-paste template.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/train.js"></script>
+</body>
+</html>
