@@ -3,6 +3,34 @@
   const historyWrap = document.getElementById("historyWrap");
   const usernameLabel = document.getElementById("usernameLabel");
   const logoutBtn = document.getElementById("logoutBtn");
+  const previewModal = document.getElementById("previewModal");
+  const previewVideo = document.getElementById("previewVideo");
+  const previewTitle = document.getElementById("previewTitle");
+  const previewDescription = document.getElementById("previewDescription");
+  const previewStart = document.getElementById("previewStart");
+  const exerciseMedia = {
+    squat: {
+      photo: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=900&q=85",
+      video: "https://www.youtube.com/embed?listType=search&list=squat%20proper%20form%20exercise&autoplay=1&mute=1",
+      description: "Watch the full range of motion: sit your hips back, keep your chest lifted, then drive through your feet."
+    },
+    plank: {
+      photo: "https://images.unsplash.com/photo-1566241142559-40e1dab266c6?auto=format&fit=crop&w=900&q=85",
+      video: "https://www.youtube.com/embed?listType=search&list=plank%20proper%20form%20exercise&autoplay=1&mute=1",
+      description: "Set your elbows beneath your shoulders, brace your core, and keep one long line from shoulders to heels."
+    },
+    cobra: {
+      photo: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=900&q=85",
+      video: "https://www.youtube.com/embed?listType=search&list=cobra%20stretch%20proper%20form&autoplay=1&mute=1",
+      description: "Move slowly into the stretch, open through your chest, and keep the shoulders relaxed away from your ears."
+    }
+  };
+  const quotes = [
+    "The hardest part is showing up. You are already here.",
+    "Small steps still move you forward. Take the next one.",
+    "Your future self is built from the choices you make today.",
+    "You do not need a perfect workout. You need an honest beginning.",
+  ];
 
   async function requireAuth() {
     const res = await fetch("/api/auth/me");
@@ -33,6 +61,32 @@
     });
   }
 
+  function updateStats(history) {
+    document.getElementById("sessionCount").textContent = history.length;
+    document.getElementById("minuteCount").textContent = Math.round(
+      history.reduce((total, item) => total + (item.duration_seconds || 0), 0) / 60
+    );
+    const days = new Set(history.map((item) => new Date(item.started_at).toDateString()));
+    document.getElementById("bestStreak").textContent = days.size;
+    document.getElementById("dailyQuote").textContent = quotes[new Date().getDate() % quotes.length];
+  }
+
+  function closePreview() {
+    previewModal.hidden = true;
+    previewVideo.src = "";
+    document.body.classList.remove("modal-open");
+  }
+
+  function openPreview(exercise) {
+    const media = exerciseMedia[exercise.name] || {};
+    previewTitle.textContent = exercise.display_name;
+    previewDescription.textContent = media.description || "Watch the movement, then start your coached session when you are ready.";
+    previewStart.href = `predict.html?exercise=${encodeURIComponent(exercise.name)}`;
+    previewVideo.src = media.video || "https://www.youtube.com/embed?listType=search&list=exercise%20form";
+    previewModal.hidden = false;
+    document.body.classList.add("modal-open");
+  }
+
   async function loadExercises() {
     const res = await fetch("/api/exercises");
     const data = await res.json();
@@ -47,31 +101,42 @@
     }
     exerciseGrid.innerHTML = exercises
       .map((ex) => {
-        const statusClass = ex.trained ? "ready" : "untrained";
-        const statusText = ex.trained
-          ? `Model ready · ${(ex.accuracy * 100).toFixed(0)}% val. accuracy`
-          : "Not trained yet";
+        const typeText = ex.type === "reps" ? "Build strength · reps" : "Find your calm · hold";
+        const media = exerciseMedia[ex.name] || {};
         return `
-          <a class="exercise-card" href="predict.html?exercise=${encodeURIComponent(ex.name)}">
-            <span class="exercise-icon">${ex.icon}</span>
-            <h3>${ex.display_name}</h3>
-            <span class="exercise-type">${ex.type === "reps" ? "Rep-based" : "Hold pose"}</span>
-            <div class="exercise-status ${statusClass}">
-              <span class="status-dot ${statusClass}"></span> ${statusText}
+          <article class="exercise-card" style="--exercise-photo: url('${media.photo || ""}')">
+            <div class="exercise-photo"><span class="exercise-badge">${ex.type === "reps" ? "REPS" : "HOLD"}</span></div>
+            <div class="exercise-card-body">
+              <div class="exercise-card-top"><h3>${ex.display_name}</h3><span class="arrow-mark">&rarr;</span></div>
+              <span class="exercise-type">${typeText}</span>
+              <div class="exercise-actions"><button class="btn btn-preview" type="button" data-preview="${ex.name}">Watch preview</button><a class="exercise-cta" href="predict.html?exercise=${encodeURIComponent(ex.name)}">Start session</a></div>
             </div>
-          </a>
+          </article>
         `;
       })
       .join("");
+    exerciseGrid.querySelectorAll("[data-preview]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const exercise = exercises.find((item) => item.name === button.dataset.preview);
+        if (exercise) openPreview(exercise);
+      });
+    });
   }
+
+  previewModal.querySelectorAll("[data-close-preview]").forEach((element) => element.addEventListener("click", closePreview));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !previewModal.hidden) closePreview();
+  });
 
   async function loadHistory() {
     const res = await fetch("/api/history");
     const data = await res.json();
     if (!data.ok || data.history.length === 0) {
+      updateStats([]);
       historyWrap.innerHTML = `<div class="empty-note">No sessions yet — finish a live workout to see it here.</div>`;
       return;
     }
+    updateStats(data.history);
     const rows = data.history
       .map((h) => {
         const metric =

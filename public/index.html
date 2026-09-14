@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Exercise AI Trainer</title>
-<link rel="stylesheet" href="css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MoveWell — Your AI workout companion</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
+
 <body>
   <div class="topbar">
-    <div class="brand"><span class="brand-mark"></span> Exercise AI Trainer</div>
+    <div class="brand"><span class="brand-mark"></span> MoveWell</div>
     <div class="nav-links">
-      <a href="index.html" class="active">Exercises</a>
-      <a href="train.html">Train models</a>
+      <a href="index.html" class="active">My workout</a>
+      <a href="#history">Progress</a>
     </div>
     <div class="user-chip">
       <span id="usernameLabel">...</span>
@@ -19,24 +21,88 @@
     </div>
   </div>
 
-  <div class="page">
-    <div class="section-title">
-      <h2>Choose an exercise</h2>
-      <span class="hint">Select one to start live form detection</span>
-    </div>
-    <div class="exercise-grid" id="exerciseGrid">
-      <div class="empty-note">Loading exercises…</div>
+  <main class="page dashboard-page">
+    <section class="welcome-hero">
+      <div class="hero-copy">
+        <span class="eyebrow">YOUR DAILY RESET</span>
+        <h1 class="hero-typing" aria-label="Show up for yourself, one strong move at a time.">
+          <span class="typing-line typing-line-1" aria-hidden="true">Show up for</span>
+          <span class="typing-line typing-line-2" aria-hidden="true">yourself,</span>
+          <span class="typing-line typing-line-3 accent-line" aria-hidden="true">one strong move</span>
+          <span class="typing-line typing-line-4" aria-hidden="true">at a time.</span>
+        </h1>
+        <p class="hero-supporting-copy">Build a better habit with thoughtful coaching, clear feedback, and a little
+          momentum when you need it.</p>
+        <a class="btn btn-light" href="#workout">Start today's workout <span aria-hidden="true">&rarr;</span></a>
+      </div>
+      <div class="hero-quote">
+        <span class="quote-mark">“</span>
+        <p id="dailyQuote">The hardest part is showing up. You are already here.</p>
+        <span class="quote-credit">MoveWell daily note</span>
+      </div>
+    </section>
+
+    <section class="dashboard-stats" aria-label="Your progress">
+      <div><span class="stat-value" id="sessionCount">0</span><span class="stat-label">sessions completed</span></div>
+      <div><span class="stat-value" id="minuteCount">0</span><span class="stat-label">minutes moved</span></div>
+      <div><span class="stat-value" id="bestStreak">0</span><span class="stat-label">day momentum</span></div>
+      <div class="stat-message"><span>Consistency beats intensity.</span><strong>Keep your promise to yourself.</strong>
+      </div>
+    </section>
+
+    <section id="workout" class="section-block">
+      <div class="section-title">
+        <div><span class="eyebrow">COACHED MOVEMENT</span>
+          <h2>Choose your focus</h2>
+        </div>
+        <span class="hint">Real-time form guidance from your camera</span>
+      </div>
+      <div class="exercise-grid" id="exerciseGrid">
+        <div class="empty-note">Loading your movement library...</div>
+      </div>
+    </section>
+
+    <div class="preview-modal" id="previewModal" hidden>
+      <div class="preview-backdrop" data-close-preview></div>
+      <section class="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+        <button class="preview-close" type="button" aria-label="Close preview" data-close-preview>&times;</button>
+        <div class="preview-video-wrap">
+          <iframe id="previewVideo" title="Exercise movement preview"
+            allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+          <div class="preview-loading">Loading movement preview...</div>
+        </div>
+        <div class="preview-content">
+          <span class="eyebrow">MOVEMENT PREVIEW</span>
+          <h2 id="previewTitle">Exercise</h2>
+          <p id="previewDescription">Watch the movement, then start your coached session when you are ready.</p>
+          <a class="btn btn-primary" id="previewStart" href="#">Start this session <span
+              aria-hidden="true">&rarr;</span></a>
+        </div>
+      </section>
     </div>
 
-    <div class="section-title">
-      <h2>Recent sessions</h2>
-      <span class="hint">Last 50</span>
-    </div>
-    <div id="historyWrap">
-      <div class="empty-note">Loading history…</div>
-    </div>
-  </div>
+    <section class="inspiration-strip">
+      <div class="inspiration-photo"></div>
+      <div class="inspiration-copy">
+        <span class="eyebrow">A NOTE FOR TODAY</span>
+        <h2>Progress is quiet until it isn't.</h2>
+        <p>Every careful rep is practice for the person you are becoming. Make the next one count.</p>
+      </div>
+    </section>
+
+    <section id="history" class="section-block history-section">
+      <div class="section-title">
+        <div><span class="eyebrow">YOUR JOURNEY</span>
+          <h2>Recent sessions</h2>
+        </div><span class="hint">Your last 50 workouts</span>
+      </div>
+      <div id="historyWrap">
+        <div class="empty-note">Loading your progress...</div>
+      </div>
+    </section>
+  </main>
 
   <script src="js/main.js"></script>
 </body>
+
 </html>
