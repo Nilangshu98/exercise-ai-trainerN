@@ -109,7 +109,7 @@
   }
 
   async function loadExerciseCfg() {
-    const res = await fetch("/api/exercises");
+    const res = await apiFetch("/api/exercises");
     const data = await res.json();
     if (!data.ok || !data.exercises[exerciseName]) {
       els.title.textContent = "Unknown exercise";
@@ -169,7 +169,7 @@
     if (!sessionId) return;
     try {
       const image = captureFrameBase64();
-      const res = await fetch("/api/live/frame", {
+      const res = await apiFetch("/api/live/frame", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, image }),
@@ -243,7 +243,7 @@
       return;
     }
 
-    const res = await fetch("/api/live/start", {
+    const res = await apiFetch("/api/live/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ exercise: exerciseName, timerSeconds: selectedTimerSeconds || null }),
@@ -272,7 +272,7 @@
     els.timerPill.style.display = "none";
 
     if (sessionId) {
-      const res = await fetch("/api/live/stop", {
+      const res = await apiFetch("/api/live/stop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId }),
@@ -307,16 +307,16 @@
   els.stopBtn.addEventListener("click", stopSession);
 
   els.logoutBtn.addEventListener("click", async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await apiFetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login.html";
   });
 
   window.addEventListener("beforeunload", () => {
-    if (sessionId) navigator.sendBeacon?.("/api/live/stop", JSON.stringify({ sessionId }));
+    if (sessionId) navigator.sendBeacon?.(apiUrl("/api/live/stop"), JSON.stringify({ sessionId }));
   });
 
   (async () => {
-    const me = await (await fetch("/api/auth/me")).json();
+    const me = await (await apiFetch("/api/auth/me")).json();
     if (!me.loggedIn) {
       window.location.href = "/login.html";
       return;

@@ -33,7 +33,7 @@
   ];
 
   async function requireAuth() {
-    const res = await fetch("/api/auth/me");
+    const res = await apiFetch("/api/auth/me");
     const data = await res.json();
     if (!data.loggedIn) {
       window.location.href = "/login.html";
@@ -44,7 +44,7 @@
   }
 
   logoutBtn.addEventListener("click", async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await apiFetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login.html";
   });
 
@@ -88,7 +88,7 @@
   }
 
   async function loadExercises() {
-    const res = await fetch("/api/exercises");
+    const res = await apiFetch("/api/exercises");
     const data = await res.json();
     if (!data.ok) {
       exerciseGrid.innerHTML = `<div class="empty-note">Could not load exercises: ${data.error}</div>`;
@@ -129,7 +129,7 @@
   });
 
   async function loadHistory() {
-    const res = await fetch("/api/history");
+    const res = await apiFetch("/api/history");
     const data = await res.json();
     if (!data.ok || data.history.length === 0) {
       updateStats([]);

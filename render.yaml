@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: exercise-ai-trainer-api
+    runtime: node
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        sync: false
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: ML_SERVICE_KEY
+        sync: false
+      - key: FRONTEND_URLS
+        sync: false
+    disk:
+      name: exercise-data
+      mountPath: /opt/render/project/src/db
+      sizeGB: 1

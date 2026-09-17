@@ -1,4 +1,8 @@
 node_modules/
+.env
+.env.*
+!.env.example
+!.env.frontend.example
 db/app.sqlite
 db/app.sqlite-*
 models/*.pkl
@@ -7,4 +11,6 @@ models/*.task
 python/__pycache__/
 __pycache__/
 *.pyc
+.DS_Store
+dist/
 .DS_Store

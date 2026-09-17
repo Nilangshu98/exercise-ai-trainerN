@@ -9,7 +9,7 @@ const formError = document.getElementById("formError");
 const authForm = document.getElementById("authForm");
 
 // If already logged in, skip straight to the dashboard.
-fetch("/api/auth/me")
+apiFetch("/api/auth/me")
   .then((r) => r.json())
   .then((data) => {
     if (data.loggedIn) window.location.href = "index.html";
@@ -43,7 +43,7 @@ authForm.addEventListener("submit", async (e) => {
   const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
 
   try {
-    const res = await fetch(endpoint, {
+    const res = await apiFetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),

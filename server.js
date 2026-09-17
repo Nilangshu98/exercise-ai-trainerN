@@ -1,6 +1,7 @@
+require("dotenv").config();
+
 const path = require("path");
 const fs = require("fs");
-const { execFile } = require("child_process");
 const express = require("express");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
@@ -12,27 +13,41 @@ const { getExercises, invalidateCache } = require("./lib/exerciseConfig");
 const liveSessions = require("./lib/liveSessionManager");
 
 const PORT = process.env.PORT || 3000;
-const PYTHON_DIR = path.join(__dirname, "python");
-const DATASET_DIR = path.join(__dirname, "dataset");
-
-function _defaultPythonBin() {
-  return process.platform === "win32" ? "python" : "python3";
-}
-
-const PYTHON_BIN = process.env.PYTHON_BIN || _defaultPythonBin();
+const FRONTEND_URLS = (process.env.FRONTEND_URLS || "http://localhost:3000")
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
 
 const app = express();
+app.set("trust proxy", 1);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && FRONTEND_URLS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  }
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
 app.use(express.json({ limit: "8mb" })); // webcam frames as base64 can be a few hundred KB
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "change-this-secret-in-production",
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }, // 7 days
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
   })
 );
 
 const predictor = new PredictorClient();
+
+app.get("/health", (req, res) => res.json({ ok: true, service: "backend" }));
 
 // ---------------------------------------------------------------------
 // Auth helpers
@@ -92,9 +107,9 @@ app.get("/api/auth/me", (req, res) => {
 // ---------------------------------------------------------------------
 // Exercises
 // ---------------------------------------------------------------------
-app.get("/api/exercises", requireAuth, (req, res) => {
+app.get("/api/exercises", requireAuth, async (req, res) => {
   try {
-    res.json({ ok: true, exercises: getExercises() });
+    res.json({ ok: true, exercises: await getExercises() });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
@@ -104,28 +119,7 @@ app.get("/api/exercises", requireAuth, (req, res) => {
 // Training
 // ---------------------------------------------------------------------
 function runTrainingScript(args) {
-  return new Promise((resolve, reject) => {
-    execFile(
-      PYTHON_BIN,
-      ["train.py", ...args],
-      { cwd: PYTHON_DIR, maxBuffer: 20 * 1024 * 1024, timeout: 20 * 60 * 1000 },
-      (error, stdout, stderr) => {
-        const line = stdout
-          .split("\n")
-          .reverse()
-          .find((l) => l.startsWith("RESULT_JSON:"));
-        if (line) {
-          try {
-            resolve({ results: JSON.parse(line.replace("RESULT_JSON:", "")), log: stdout });
-            return;
-          } catch (e) {
-            // fall through to error handling below
-          }
-        }
-        reject(new Error(stderr || error?.message || "Training script produced no result"));
-      }
-    );
-  });
+  return predictor.train(args.includes("--all") ? { all: true } : { exercise: args[1] });
 }
 
 app.post("/api/train/:exercise", requireAuth, async (req, res) => {
@@ -155,29 +149,32 @@ app.post("/api/train-all", requireAuth, async (req, res) => {
 // into dataset/<exercise>/<correct|incorrect>/. Useful for growing a
 // dataset without touching the filesystem directly.
 const upload = multer({ limits: { fileSize: 200 * 1024 * 1024 } });
-app.post("/api/dataset/:exercise/upload", requireAuth, upload.single("file"), (req, res) => {
+app.post("/api/dataset/:exercise/upload", requireAuth, upload.single("file"), async (req, res) => {
   const { exercise } = req.params;
   const label = req.body.label === "incorrect" ? "incorrect" : "correct";
-  const exercises = getExercises();
+  const exercises = await getExercises();
   if (!exercises[exercise]) {
     return res.status(400).json({ ok: false, error: `Unknown exercise '${exercise}'` });
   }
   if (!req.file) {
     return res.status(400).json({ ok: false, error: "No file uploaded" });
   }
-  const dir = path.join(DATASET_DIR, exercise, label);
-  fs.mkdirSync(dir, { recursive: true });
   const safeName = `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  fs.writeFileSync(path.join(dir, safeName), req.file.buffer);
-  res.json({ ok: true, saved: `${exercise}/${label}/${safeName}` });
+  const result = await predictor.uploadDataset({
+    exercise,
+    label,
+    filename: safeName,
+    data: req.file.buffer.toString("base64"),
+  });
+  res.json(result);
 });
 
 // ---------------------------------------------------------------------
 // Live detection
 // ---------------------------------------------------------------------
-app.post("/api/live/start", requireAuth, (req, res) => {
+app.post("/api/live/start", requireAuth, async (req, res) => {
   const { exercise, timerSeconds } = req.body || {};
-  const exercises = getExercises();
+  const exercises = await getExercises();
   const cfg = exercises[exercise];
   if (!cfg) {
     return res.status(400).json({ ok: false, error: `Unknown exercise '${exercise}'` });
@@ -189,20 +186,10 @@ app.post("/api/live/start", requireAuth, (req, res) => {
     });
   }
 
-  // pull rep-counting thresholds fresh from python config (cached in getExercises
-  // only covers status, so re-read raw config for thresholds too)
-  const raw = JSON.parse(
-    require("child_process").execFileSync(
-      PYTHON_BIN,
-      ["list_exercises.py"],
-      { cwd: PYTHON_DIR, encoding: "utf-8" }
-    )
-  )[exercise];
-
   const session = liveSessions.startSession({
     userId: req.session.userId,
     exercise,
-    exerciseCfg: raw,
+    exerciseCfg: cfg,
     timerSeconds,
   });
 

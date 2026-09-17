@@ -4,14 +4,16 @@
   "description": "Real-time AI exercise form coach — MediaPipe + scikit-learn models per exercise, Node.js backend, browser frontend.",
   "main": "server.js",
   "scripts": {
+    "build": "node scripts/build-frontend.js",
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^17.4.2",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
-    "better-sqlite3": "^11.3.0",
-    "bcryptjs": "^2.4.3",
     "multer": "^1.4.5-lts.1"
   },
   "engines": {
