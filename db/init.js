@@ -16,14 +16,6 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
-  CREATE TABLE IF NOT EXISTS admins (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-
   CREATE TABLE IF NOT EXISTS workout_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -41,6 +33,8 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_history_user ON workout_history(user_id);
 `);
+
+db.exec("DROP TABLE IF EXISTS admins");
 
 if (isNew) {
   console.log(`Created new database at ${DB_PATH}`);
