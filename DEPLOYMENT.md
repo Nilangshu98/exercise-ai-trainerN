@@ -1,42 +1,56 @@
 # Deployment
 
-The project runs as two Render backend services and one Vercel static frontend.
-The root `render.yaml` is a Render Blueprint for both backend services.
+Deploy the frontend and Node API together to Vercel. Keep the existing Python
+ML service on Render. PostgreSQL is required because Vercel's filesystem and
+in-memory process state are temporary.
 
-## Render
+## 1. Create a PostgreSQL database
 
-1. In Render, create a Blueprint instance from this repository and apply
-   `render.yaml`. It creates:
-   - `exercise-ai-trainer-api`, the Node/Express API with a persistent SQLite disk.
-   - `exercise-ai-trainer-ml`, the Dockerized Python/MediaPipe inference service
-     with a persistent disk for models and training data.
-2. Set `SESSION_SECRET` on the Node service to a long, random secret.
-3. Set the same strong, random `ML_SERVICE_KEY` on both services. The Node
-   service uses it for authenticated calls to the Python service.
-4. Copy the Node service's public URL for the Vercel configuration below.
-   The Blueprint wires `ML_SERVICE_URL` to the ML service automatically.
+Create a PostgreSQL database with a provider such as Neon or Supabase. Copy its
+PostgreSQL connection string. Use the provider's TLS-enabled URL for production.
+The app creates its user, workout history, and active workout tables at runtime;
+the session store creates its own table.
 
-The ML service seeds its persistent disk with the repository's bundled models
-and sample dataset the first time it starts. Model training and uploaded samples
-are then retained across redeploys.
+Existing SQLite users and workout history are not automatically copied to this
+new database.
 
-## Vercel
+## 2. Deploy to Vercel
 
-1. Import this repository as a Vercel project. The included `vercel.json`
-   publishes the static site from `dist`, built with `npm run build`.
-2. Add `BACKEND_URL` as a Vercel environment variable containing the public
-   Node service URL from Render (for example,
-   `https://exercise-ai-trainer-api.onrender.com`).
-3. Redeploy after setting the variable so the frontend build embeds the API URL.
+1. Push the latest project changes to GitHub, then import the repository into
+   Vercel.
+2. Use the repository root as the project root. The included `vercel.json`
+   runs `npm run build` and publishes `dist`; the `api/` directory contains
+   the serverless Node API.
+3. In **Project Settings → Environment Variables**, add these server-side
+   variables for Production (and Preview too if you use preview deployments):
+   - `DATABASE_URL`: the hosted PostgreSQL connection string.
+   - `SESSION_SECRET`: a long, random secret used to sign login sessions.
+   - `ML_SERVICE_URL`: the base URL of the already-deployed Render ML service,
+     with no trailing slash.
+   - `ML_SERVICE_KEY`: the same key configured on the Render ML service. If
+     the ML service does not require a key, leave this variable unset.
+4. Save the variables and deploy or redeploy. No `BACKEND_URL` or
+   `FRONTEND_URLS` is needed: browser requests use the same Vercel origin as
+   the frontend.
+5. Verify `https://<your-vercel-domain>/api/health` returns
+   `{"ok":true,"service":"backend"}`. Then register/sign in and test a workout.
 
-Set `FRONTEND_URLS` on the Render Node service to the Vercel production URL
-without a trailing slash. Add comma-separated preview URLs only if those
-previews need to sign in. `BACKEND_URL` must point to the Node API service,
-not the Python ML service.
+For Vercel Preview deployments, each preview uses the same configured database,
+session secret, and Render ML service unless you assign different environment
+values.
 
-Check the deployed services:
+## Vercel runtime limits
 
-- `https://<render-api>/health` should return `{"ok":true,"service":"backend"}`.
-- `https://<render-ml>/health` should return `{"ok":true,"service":"ml"}`.
-- The Vercel site should be able to register/sign in, load exercises, and start a
-  workout.
+Vercel's serverless request-body limit restricts training-sample uploads to
+about 3 MB in this deployment. The live-camera frames are sent as small JSON
+requests. Long model-training requests can exceed the function-duration limit
+on lower Vercel plans; use a plan with a suitable function duration or train
+models through another workflow on the Render ML service.
+
+## Local development
+
+Set `DATABASE_URL` and `SESSION_SECRET` in `.env`; for a local PostgreSQL
+instance, set `DATABASE_SSL=false`. Set `ML_SERVICE_URL` to the local or
+deployed ML service URL. Start the Python ML service if running it locally,
+then run `npm start`. The frontend and API are served from
+`http://localhost:3000`.
