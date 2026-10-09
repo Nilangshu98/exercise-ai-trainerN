@@ -170,9 +170,16 @@
   }
 
   (async () => {
-    const user = await requireAuth();
-    if (!user) return;
-    loadExercises();
-    loadHistory();
+    try {
+      const user = await requireAuth();
+      if (!user) return;
+      loadExercises();
+      loadHistory();
+    } catch (error) {
+      const message = "Could not verify your sign-in. Please refresh the page or sign in again.";
+      exerciseGrid.innerHTML = `<div class="empty-note">${message}</div>`;
+      historyWrap.innerHTML = `<div class="empty-note">${message}</div>`;
+      console.error("Dashboard initialization failed:", error);
+    }
   })();
 })();
