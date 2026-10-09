@@ -109,13 +109,19 @@
   }
 
   async function loadExerciseCfg() {
-    const res = await apiFetch("/api/exercises");
-    const data = await res.json();
-    if (!data.ok || !data.exercises[exerciseName]) {
-      els.title.textContent = "Unknown exercise";
+    try {
+      const res = await apiFetch("/api/exercises");
+      const data = await res.json();
+      if (!data.ok || !data.exercises[exerciseName]) {
+        els.title.textContent = data.error || "Unknown exercise";
+        return null;
+      }
+      return data.exercises[exerciseName];
+    } catch (error) {
+      els.title.textContent = "Workout service unavailable";
+      setTip(error.message, "incorrect");
       return null;
     }
-    return data.exercises[exerciseName];
   }
 
   function setupUiForType(cfg) {
@@ -243,24 +249,30 @@
       return;
     }
 
-    const res = await apiFetch("/api/live/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ exercise: exerciseName, timerSeconds: selectedTimerSeconds || null }),
-    });
-    const data = await res.json();
-    if (!data.ok) {
-      setTip(data.error, "incorrect");
+    try {
+      const res = await apiFetch("/api/live/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exercise: exerciseName, timerSeconds: selectedTimerSeconds || null }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setTip(data.error, "incorrect");
+        stopCamera();
+        els.startBtn.disabled = false;
+        return;
+      }
+
+      sessionId = data.sessionId;
+      lastReps = 0;
+      els.startBtn.style.display = "none";
+      els.stopBtn.style.display = "inline-flex";
+      captureTimer = setInterval(captureLoop, FRAME_INTERVAL_MS);
+    } catch (error) {
+      setTip(`Could not start workout: ${error.message}`, "incorrect");
       stopCamera();
       els.startBtn.disabled = false;
-      return;
     }
-
-    sessionId = data.sessionId;
-    lastReps = 0;
-    els.startBtn.style.display = "none";
-    els.stopBtn.style.display = "inline-flex";
-    captureTimer = setInterval(captureLoop, FRAME_INTERVAL_MS);
   }
 
   async function stopSession() {

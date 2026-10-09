@@ -1,7 +1,8 @@
-"""HTTP wrapper for the long-lived pose predictor used by Railway."""
+"""HTTP wrapper for the long-lived pose predictor service."""
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -9,7 +10,23 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from exercise_rules import EXERCISES
 import predictor
-from predictor import ROOT, create_pose_detector, handle_frame, load_models
+from predictor import DATA_ROOT, ROOT, create_pose_detector, handle_frame, load_models
+
+
+def initialize_data_dir():
+    DATA_ROOT.mkdir(parents=True, exist_ok=True)
+    if DATA_ROOT == ROOT:
+        return
+
+    for name in ("models", "dataset"):
+        target = DATA_ROOT / name
+        if target.exists():
+            continue
+        source = ROOT / name
+        if source.exists():
+            shutil.copytree(source, target)
+        else:
+            target.mkdir()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -74,11 +91,11 @@ class Handler(BaseHTTPRequestHandler):
             exercise = payload.get("exercise")
             label = payload.get("label") if payload.get("label") in ("correct", "incorrect") else "correct"
             filename = Path(payload.get("filename", "sample.bin")).name
-            target = ROOT / "dataset" / exercise / label / filename
+            target = DATA_ROOT / "dataset" / exercise / label / filename
             target.parent.mkdir(parents=True, exist_ok=True)
             import base64
             target.write_bytes(base64.b64decode(payload.get("data", "")))
-            self._send(200, {"ok": True, "saved": str(target.relative_to(ROOT))})
+            self._send(200, {"ok": True, "saved": str(target.relative_to(DATA_ROOT))})
             return
         if self.path == "/train":
             args = [sys.executable, str(ROOT / "python" / "train.py")]
@@ -91,6 +108,7 @@ class Handler(BaseHTTPRequestHandler):
             if result.returncode != 0 or not line:
                 self._send(500, {"ok": False, "error": result.stderr or "Training failed", "log": result.stdout})
                 return
+            initialize_data_dir()
             load_models()
             self._send(200, {"ok": True, "results": json.loads(line.replace("RESULT_JSON:", "")), "log": result.stdout})
             return

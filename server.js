@@ -15,7 +15,7 @@ const liveSessions = require("./lib/liveSessionManager");
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URLS = (process.env.FRONTEND_URLS || "http://localhost:3000")
   .split(",")
-  .map((url) => url.trim())
+  .map((url) => url.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
 const app = express();
@@ -173,27 +173,31 @@ app.post("/api/dataset/:exercise/upload", requireAuth, upload.single("file"), as
 // Live detection
 // ---------------------------------------------------------------------
 app.post("/api/live/start", requireAuth, async (req, res) => {
-  const { exercise, timerSeconds } = req.body || {};
-  const exercises = await getExercises();
-  const cfg = exercises[exercise];
-  if (!cfg) {
-    return res.status(400).json({ ok: false, error: `Unknown exercise '${exercise}'` });
-  }
-  if (!cfg.trained) {
-    return res.status(400).json({
-      ok: false,
-      error: `'${cfg.display_name}' hasn't been trained yet. Go to the Train page first.`,
+  try {
+    const { exercise, timerSeconds } = req.body || {};
+    const exercises = await getExercises();
+    const cfg = exercises[exercise];
+    if (!cfg) {
+      return res.status(400).json({ ok: false, error: `Unknown exercise '${exercise}'` });
+    }
+    if (!cfg.trained) {
+      return res.status(400).json({
+        ok: false,
+        error: `'${cfg.display_name}' hasn't been trained yet. Go to the Train page first.`,
+      });
+    }
+
+    const session = liveSessions.startSession({
+      userId: req.session.userId,
+      exercise,
+      exerciseCfg: cfg,
+      timerSeconds,
     });
+
+    res.json({ ok: true, sessionId: session.id, type: session.type });
+  } catch (e) {
+    res.status(503).json({ ok: false, error: `Workout service unavailable: ${e.message}` });
   }
-
-  const session = liveSessions.startSession({
-    userId: req.session.userId,
-    exercise,
-    exerciseCfg: cfg,
-    timerSeconds,
-  });
-
-  res.json({ ok: true, sessionId: session.id, type: session.type });
 });
 
 app.post("/api/live/frame", requireAuth, async (req, res) => {

@@ -44,7 +44,8 @@ from pose_model import create_pose_detector
 from pose_utils import landmarks_to_list
 
 ROOT = Path(__file__).resolve().parent.parent
-MODELS_DIR = ROOT / "models"
+DATA_ROOT = Path(os.environ.get("APP_DATA_DIR", ROOT)).resolve()
+MODELS_DIR = DATA_ROOT / "models"
 
 TIP_ZSCORE_THRESHOLD = 1.0  # how many std-devs away from "correct" mean counts as "fix this"
 

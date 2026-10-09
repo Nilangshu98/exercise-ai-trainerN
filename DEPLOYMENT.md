@@ -1,26 +1,42 @@
 # Deployment
 
-The repository is split into three services.
+The project runs as two Render backend services and one Vercel static frontend.
+The root `render.yaml` is a Render Blueprint for both backend services.
 
-## Railway ML service
+## Render
 
-Deploy the repository to Railway. Railway uses `Dockerfile`, which runs `python python/ml_service.py`. Set `ML_SERVICE_KEY` to a secret and copy the public Railway URL.
+1. In Render, create a Blueprint instance from this repository and apply
+   `render.yaml`. It creates:
+   - `exercise-ai-trainer-api`, the Node/Express API with a persistent SQLite disk.
+   - `exercise-ai-trainer-ml`, the Dockerized Python/MediaPipe inference service
+     with a persistent disk for models and training data.
+2. Set `SESSION_SECRET` on the Node service to a long, random secret.
+3. Set the same strong, random `ML_SERVICE_KEY` on both services. The Node
+   service uses it for authenticated calls to the Python service.
+4. Copy the Node service's public URL for the Vercel configuration below.
+   The Blueprint wires `ML_SERVICE_URL` to the ML service automatically.
 
-Add a Railway volume mounted at `/app/models` and `/app/dataset` (or otherwise persist those directories). Training writes model files there, and container redeploys should not erase them.
+The ML service seeds its persistent disk with the repository's bundled models
+and sample dataset the first time it starts. Model training and uploaded samples
+are then retained across redeploys.
 
-## Render backend
+## Vercel
 
-Deploy the repository to Render as a Node web service:
+1. Import this repository as a Vercel project. The included `vercel.json`
+   publishes the static site from `dist`, built with `npm run build`.
+2. Add `BACKEND_URL` as a Vercel environment variable containing the public
+   Node service URL from Render (for example,
+   `https://exercise-ai-trainer-api.onrender.com`).
+3. Redeploy after setting the variable so the frontend build embeds the API URL.
 
-- Build command: `npm ci`
-- Start command: `npm start`
-- `ML_SERVICE_URL`: the Railway URL
-- `ML_SERVICE_KEY`: the same secret used on Railway
-- `SESSION_SECRET`: a long random secret
-- `FRONTEND_URLS`: the final Vercel URL
+Set `FRONTEND_URLS` on the Render Node service to the Vercel production URL
+without a trailing slash. Add comma-separated preview URLs only if those
+previews need to sign in. `BACKEND_URL` must point to the Node API service,
+not the Python ML service.
 
-The included `render.yaml` adds a persistent disk for SQLite. Dataset uploads and training are proxied to Railway, where the ML files live.
+Check the deployed services:
 
-## Vercel frontend
-
-Deploy the repository to Vercel as a static site. Set `BACKEND_URL` to the Render URL. The included `vercel.json` uses `npm run build` and publishes `dist`.
+- `https://<render-api>/health` should return `{"ok":true,"service":"backend"}`.
+- `https://<render-ml>/health` should return `{"ok":true,"service":"ml"}`.
+- The Vercel site should be able to register/sign in, load exercises, and start a
+  workout.

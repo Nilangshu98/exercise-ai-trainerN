@@ -88,22 +88,23 @@
   }
 
   async function loadExercises() {
-    const res = await apiFetch("/api/exercises");
-    const data = await res.json();
-    if (!data.ok) {
-      exerciseGrid.innerHTML = `<div class="empty-note">Could not load exercises: ${data.error}</div>`;
-      return;
-    }
-    const exercises = Object.values(data.exercises);
-    if (exercises.length === 0) {
-      exerciseGrid.innerHTML = `<div class="empty-note">No exercises configured yet.</div>`;
-      return;
-    }
-    exerciseGrid.innerHTML = exercises
-      .map((ex) => {
-        const typeText = ex.type === "reps" ? "Build strength · reps" : "Find your calm · hold";
-        const media = exerciseMedia[ex.name] || {};
-        return `
+    try {
+      const res = await apiFetch("/api/exercises");
+      const data = await res.json();
+      if (!data.ok) {
+        exerciseGrid.innerHTML = `<div class="empty-note">Could not load exercises: ${data.error}</div>`;
+        return;
+      }
+      const exercises = Object.values(data.exercises);
+      if (exercises.length === 0) {
+        exerciseGrid.innerHTML = `<div class="empty-note">No exercises configured yet.</div>`;
+        return;
+      }
+      exerciseGrid.innerHTML = exercises
+        .map((ex) => {
+          const typeText = ex.type === "reps" ? "Build strength · reps" : "Find your calm · hold";
+          const media = exerciseMedia[ex.name] || {};
+          return `
           <article class="exercise-card" style="--exercise-photo: url('${media.photo || ""}')">
             <div class="exercise-photo"><span class="exercise-badge">${ex.type === "reps" ? "REPS" : "HOLD"}</span></div>
             <div class="exercise-card-body">
@@ -113,14 +114,17 @@
             </div>
           </article>
         `;
-      })
-      .join("");
-    exerciseGrid.querySelectorAll("[data-preview]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const exercise = exercises.find((item) => item.name === button.dataset.preview);
-        if (exercise) openPreview(exercise);
+        })
+        .join("");
+      exerciseGrid.querySelectorAll("[data-preview]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const exercise = exercises.find((item) => item.name === button.dataset.preview);
+          if (exercise) openPreview(exercise);
+        });
       });
-    });
+    } catch (error) {
+      exerciseGrid.innerHTML = `<div class="empty-note">Could not reach the workout server. ${error.message}</div>`;
+    }
   }
 
   previewModal.querySelectorAll("[data-close-preview]").forEach((element) => element.addEventListener("click", closePreview));
@@ -129,19 +133,20 @@
   });
 
   async function loadHistory() {
-    const res = await apiFetch("/api/history");
-    const data = await res.json();
-    if (!data.ok || data.history.length === 0) {
-      updateStats([]);
-      historyWrap.innerHTML = `<div class="empty-note">No sessions yet — finish a live workout to see it here.</div>`;
-      return;
-    }
-    updateStats(data.history);
-    const rows = data.history
-      .map((h) => {
-        const metric =
-          h.reps != null ? `${h.reps} reps` : h.hold_seconds != null ? `${h.hold_seconds}s held` : "—";
-        return `
+    try {
+      const res = await apiFetch("/api/history");
+      const data = await res.json();
+      if (!data.ok || data.history.length === 0) {
+        updateStats([]);
+        historyWrap.innerHTML = `<div class="empty-note">No sessions yet — finish a live workout to see it here.</div>`;
+        return;
+      }
+      updateStats(data.history);
+      const rows = data.history
+        .map((h) => {
+          const metric =
+            h.reps != null ? `${h.reps} reps` : h.hold_seconds != null ? `${h.hold_seconds}s held` : "—";
+          return `
           <tr>
             <td>${h.exercise}</td>
             <td>${fmtDate(h.started_at)}</td>
@@ -150,14 +155,18 @@
             <td>${h.avg_accuracy != null ? h.avg_accuracy.toFixed(0) + "%" : "—"}</td>
           </tr>
         `;
-      })
-      .join("");
-    historyWrap.innerHTML = `
+        })
+        .join("");
+      historyWrap.innerHTML = `
       <table class="history-table">
         <thead><tr><th>Exercise</th><th>When</th><th>Duration</th><th>Result</th><th>Avg accuracy</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
+    } catch (error) {
+      updateStats([]);
+      historyWrap.innerHTML = `<div class="empty-note">Could not reload recent sessions. ${error.message}</div>`;
+    }
   }
 
   (async () => {

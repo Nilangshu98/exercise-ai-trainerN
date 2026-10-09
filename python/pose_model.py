@@ -29,7 +29,9 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
+ROOT = Path(__file__).resolve().parent.parent
+DATA_ROOT = Path(os.environ.get("APP_DATA_DIR", ROOT)).resolve()
+MODELS_DIR = DATA_ROOT / "models"
 TASK_MODEL_PATH = MODELS_DIR / "pose_landmarker.task"
 TASK_MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/pose_landmarker/"

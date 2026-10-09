@@ -43,8 +43,9 @@ from pose_utils import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 from pose_model import create_pose_detector
 
 ROOT = Path(__file__).resolve().parent.parent
-DATASET_DIR = ROOT / "dataset"
-MODELS_DIR = ROOT / "models"
+DATA_ROOT = Path(os.environ.get("APP_DATA_DIR", ROOT)).resolve()
+DATASET_DIR = DATA_ROOT / "dataset"
+MODELS_DIR = DATA_ROOT / "models"
 MODELS_DIR.mkdir(exist_ok=True)
 
 MAX_FRAMES_PER_VIDEO = 40  # cap so a long video doesn't dominate the dataset
